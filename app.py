@@ -6,8 +6,45 @@ from dotenv import load_dotenv
 from streamlit_image_comparison import image_comparison
 import io
 
-# --- ページ設定 ---
+# --- ページ設定 (必ず一番最初に書く必要があります) ---
 st.set_page_config(page_title="ArchiEnhance AI", layout="wide")
+
+# ==========================================
+# ▼▼▼ パスワード認証機能の追加ここから ▼▼▼
+# ==========================================
+def check_password():
+    """パスワード認証が成功したらTrueを返す関数"""
+    if "password_correct" not in st.session_state:
+        st.session_state.password_correct = False
+
+    if st.session_state.password_correct:
+        return True
+
+    # パスワード入力フォーム
+    st.write("### 🔒 アクセス制限")
+    password = st.text_input("パスワードを入力してください", type="password")
+    
+    if password:
+        # st.secrets["password"] と比較
+        try:
+            if password == st.secrets["password"]:
+                st.session_state.password_correct = True
+                st.rerun()  # 画面をリロード
+                return True
+            else:
+                st.error("パスワードが間違っています")
+        except KeyError:
+            # secretsにpasswordが設定されていない場合のエラーハンドリング
+            st.error("管理画面(Secrets)に 'password' が設定されていません。")
+
+    return False
+
+if not check_password():
+    st.stop()  # 認証されていない場合はここで処理を停止
+# ==========================================
+# ▲▲▲ パスワード認証機能の追加ここまで ▲▲▲
+# ==========================================
+
 
 # --- 1. APIキーとモデルの設定 ---
 load_dotenv()
@@ -18,7 +55,7 @@ except:
     api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("APIキーが見つかりません。.envファイルを確認してください。")
+    st.error("APIキーが見つかりません。.envファイルまたはSecretsを確認してください。")
     st.stop()
 
 genai.configure(api_key=api_key)

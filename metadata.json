@@ -1,0 +1,5 @@
+{
+  "name": "★ArchiEnhance AI",
+  "description": "An architectural visualization tool that beautifies building exterior renders by enhancing lighting, shadows, and textures using Gemini 2.5 Flash Image.",
+  "requestFramePermissions": []
+}

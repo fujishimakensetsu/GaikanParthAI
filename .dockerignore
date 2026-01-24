@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# 環境変数（ローカル用）
+.env
+.env.local
+.env.*
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv
+.venv
+env
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Node.js（不要なファイル）
+node_modules
+package.json
+package-lock.json
+*.tsx
+*.ts
+tsconfig.json
+vite.config.ts
+
+# テンポラリ
+temp
+*.tmp
+*.log
+
+# その他
+README.md
+*.md

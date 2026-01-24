@@ -20,22 +20,27 @@ def check_password():
     if st.session_state.password_correct:
         return True
 
+    # パスワードを取得（st.secrets または 環境変数）
+    try:
+        correct_password = st.secrets["password"]
+    except:
+        correct_password = os.getenv("APP_PASSWORD")
+
+    if not correct_password:
+        st.error("パスワードが設定されていません。環境変数 APP_PASSWORD を確認してください。")
+        return False
+
     # パスワード入力フォーム
     st.write("### 🔒 アクセス制限")
     password = st.text_input("パスワードを入力してください", type="password")
-    
+
     if password:
-        # st.secrets["password"] と比較
-        try:
-            if password == st.secrets["password"]:
-                st.session_state.password_correct = True
-                st.rerun()  # 画面をリロード
-                return True
-            else:
-                st.error("パスワードが間違っています")
-        except KeyError:
-            # secretsにpasswordが設定されていない場合のエラーハンドリング
-            st.error("管理画面(Secrets)に 'password' が設定されていません。")
+        if password == correct_password:
+            st.session_state.password_correct = True
+            st.rerun()  # 画面をリロード
+            return True
+        else:
+            st.error("パスワードが間違っています")
 
     return False
 

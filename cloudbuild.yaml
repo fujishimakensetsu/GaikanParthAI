@@ -1,0 +1,43 @@
+steps:
+  # Docker イメージをビルド
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/gaikan-parth-ai/gaikan-parth-ai:$COMMIT_SHA'
+      - '.'
+
+  # Artifact Registry にプッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/gaikan-parth-ai/gaikan-parth-ai:$COMMIT_SHA'
+
+  # Cloud Run にデプロイ
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'gaikan-parth-ai'
+      - '--image'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/gaikan-parth-ai/gaikan-parth-ai:$COMMIT_SHA'
+      - '--region'
+      - 'asia-northeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GEMINI_API_KEY=${_GEMINI_API_KEY}'
+      - '--set-env-vars'
+      - 'APP_PASSWORD=${_APP_PASSWORD}'
+      - '--memory'
+      - '1Gi'
+      - '--timeout'
+      - '300'
+
+images:
+  - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/gaikan-parth-ai/gaikan-parth-ai:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

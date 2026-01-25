@@ -1,2 +1,4 @@
-# HTMLアプリのため、Python依存関係は不要
-# 静的ファイルサーバーはPython組み込みのhttp.serverを使用
+flask==3.0.0
+flask-cors==4.0.0
+requests==2.31.0
+gunicorn==21.2.0

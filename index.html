@@ -408,31 +408,6 @@
                     </div>
                 </div>
 
-                <!-- API Key Input -->
-                <div class="mb-8 glass-panel p-6 corner-accent">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-6 h-6 border border-arch-gold/50 rotate-45 flex items-center justify-center">
-                            <span class="-rotate-45 text-arch-gold font-mono text-xs">00</span>
-                        </div>
-                        <span class="text-arch-cream font-medium tracking-wide">Gemini API キー</span>
-                    </div>
-                    <div class="flex gap-3">
-                        <input
-                            type="password"
-                            id="apiKeyInput"
-                            placeholder="AIzaSy..."
-                            class="flex-1 bg-arch-charcoal/90 border border-arch-steel text-arch-cream px-4 py-3 focus:outline-none focus:border-arch-gold/50 transition-colors placeholder-arch-mist/30 font-mono text-sm"
-                        >
-                        <button
-                            onclick="saveApiKey()"
-                            class="btn-secondary text-arch-cream px-6 py-3 font-medium text-sm"
-                        >
-                            保存
-                        </button>
-                    </div>
-                    <p id="apiKeyStatus" class="mt-2 text-xs font-mono"></p>
-                </div>
-
                 <!-- File Upload -->
                 <div class="mb-8">
                     <div class="flex items-center gap-3 mb-4">
@@ -579,23 +554,26 @@
         let originalImageData = null;
         let originalFileName = '';
         let generatedImageBlob = null;
-        let apiKey = localStorage.getItem('gemini_api_key') || '';
-
-        // Password - change this value to set your app password
-        const APP_PASSWORD = 'archienhance2024';
+        let appConfig = null;
 
         // Initialize
-        window.onload = function() {
+        window.onload = async function() {
+            // サーバーから設定を取得
+            try {
+                const response = await fetch('/api/config');
+                appConfig = await response.json();
+
+                if (!appConfig.hasApiKey) {
+                    showError('サーバーにAPIキーが設定されていません。管理者に連絡してください。');
+                }
+            } catch (e) {
+                console.error('Failed to load config:', e);
+                appConfig = { password: 'archienhance2024', hasApiKey: false };
+            }
+
             // Check if already logged in
             if (sessionStorage.getItem('authenticated') === 'true') {
                 showMainApp();
-            }
-
-            // Load saved API key
-            if (apiKey) {
-                document.getElementById('apiKeyInput').value = apiKey;
-                document.getElementById('apiKeyStatus').textContent = 'APIキーが保存されています';
-                document.getElementById('apiKeyStatus').className = 'mt-2 text-xs font-mono text-arch-gold/70';
             }
 
             // Setup drag and drop
@@ -611,7 +589,7 @@
         // Password check
         window.checkPassword = function() {
             const password = document.getElementById('passwordInput').value;
-            if (password === APP_PASSWORD) {
+            if (appConfig && password === appConfig.password) {
                 sessionStorage.setItem('authenticated', 'true');
                 showMainApp();
             } else {
@@ -630,16 +608,6 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
         }
-
-        // API Key
-        window.saveApiKey = function() {
-            apiKey = document.getElementById('apiKeyInput').value.trim();
-            if (apiKey) {
-                localStorage.setItem('gemini_api_key', apiKey);
-                document.getElementById('apiKeyStatus').textContent = 'APIキーを保存しました';
-                document.getElementById('apiKeyStatus').className = 'mt-2 text-xs font-mono text-green-400';
-            }
-        };
 
         // Drag and drop
         function setupDragAndDrop() {
@@ -694,8 +662,8 @@
 
         // Generate image
         window.generateImage = async function() {
-            if (!apiKey) {
-                showError('APIキーを入力してください');
+            if (!appConfig || !appConfig.hasApiKey) {
+                showError('サーバーにAPIキーが設定されていません');
                 return;
             }
 
@@ -751,36 +719,30 @@ REQUIREMENTS:
                 const base64Data = originalImageData.split(',')[1];
                 const mimeType = originalImageData.split(';')[0].split(':')[1];
 
-                // Make API request using fetch
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`, {
+                // Make API request via server proxy
+                const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: prompt },
-                                {
-                                    inline_data: {
-                                        mime_type: mimeType,
-                                        data: base64Data
-                                    }
+                        parts: [
+                            { text: prompt },
+                            {
+                                inline_data: {
+                                    mime_type: mimeType,
+                                    data: base64Data
                                 }
-                            ]
-                        }],
-                        generationConfig: {
-                            responseModalities: ["TEXT", "IMAGE"]
-                        }
+                            }
+                        ]
                     })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || 'API request failed');
-                }
-
                 const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'API request failed');
+                }
 
                 // Extract image from response
                 let generatedImageData = null;

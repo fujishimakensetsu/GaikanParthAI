@@ -31,7 +31,7 @@ def generate():
     try:
         data = request.json
 
-        # Gemini APIにリクエスト
+        # Gemini APIにリクエスト (gemini-2.0-flash-exp-image-generation)
         response = requests.post(
             f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key={GEMINI_API_KEY}',
             json={

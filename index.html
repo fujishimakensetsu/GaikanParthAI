@@ -687,33 +687,44 @@
                 const customPrompt = document.getElementById('customPrompt').value;
 
                 const isDaytime = timeOfDay === 'daytime';
-                const timeSetting = isDaytime
-                    ? "bright natural daylight, clear blue sky, warm sunlight"
-                    : "dramatic night lighting, warm interior glow from windows, elegant evening atmosphere";
 
-                let prompt = `You are an expert architectural visualizer. Enhance this building exterior perspective with professional quality.
+                // Base instruction (以前のプロンプトをベースに)
+                const baseInstruction = `
+You are an expert architectural visualizer.
+Task: Beautify this building exterior perspective ("パース").
 
-LIGHTING: ${timeSetting}
+Strict Process:
+1. Internally, analyze the image structure as if converting it to a precise line drawing.
+2. Re-render the image using the original color palette.
+3. Significantly enhance the lighting (add realistic global illumination and ambient occlusion).
+4. Deepen the shadows for better depth perception.
+${enhanceTexture ? '5. Enhance the surface textures (concrete, glass, wood, metal) to be photorealistic.' : ''}
+6. Ensure the output is a high-quality image.
+`;
 
-REQUIREMENTS:
-- Significantly enhance global illumination and ambient occlusion
-- Deepen shadows for better depth perception
-- Maintain the original architectural design and proportions
-- Output a photorealistic, high-quality architectural visualization`;
+                // Time of day instruction
+                const timeInstruction = isDaytime
+                    ? "Lighting Setting: Daytime. Bright natural sunlight, clear blue sky, distinct shadows, vibrant and energetic atmosphere."
+                    : "Lighting Setting: Nighttime. Dark evening sky, warm artificial lighting emitting from windows and exterior fixtures, dramatic contrast, cozy and elegant atmosphere.";
 
-                if (autoBackground) {
-                    prompt += `\n\nBACKGROUND: If the image has white or empty background areas, generate a realistic, contextual environment (sky, landscape, trees, or urban context) that seamlessly blends with the building and lighting.`;
-                }
+                // Background instruction
+                const backgroundInstruction = autoBackground
+                    ? "Background Generation: The user has requested to fill the background. If the input image has a white or empty background, generate a realistic, context-aware environment (sky, landscape, greenery, or city street) that seamlessly blends with the building's perspective and the selected time of day. Do not leave white space."
+                    : "";
 
-                if (enhanceTexture) {
-                    prompt += `\n\nTEXTURES: Enhance all surface materials (concrete, glass, wood, metal, stone) to appear highly detailed and photorealistic.`;
-                }
+                // User additional instruction
+                const userInstruction = customPrompt
+                    ? `Additional User Requirement: ${customPrompt}`
+                    : "";
 
-                if (customPrompt) {
-                    prompt += `\n\nADDITIONAL INSTRUCTIONS: ${customPrompt}`;
-                }
+                const prompt = `${baseInstruction}
 
-                prompt += `\n\nDeliver a stunning, professional architectural rendering.`;
+${timeInstruction}
+
+${backgroundInstruction}
+
+${userInstruction}
+`.trim();
 
                 // Convert base64 to proper format
                 const base64Data = originalImageData.split(',')[1];

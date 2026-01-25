@@ -15,7 +15,8 @@
       "Bash(gcloud iam service-accounts add-iam-policy-binding:*)",
       "Bash(gcloud artifacts repositories describe:*)",
       "Bash(gcloud artifacts repositories create:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebSearch"
     ]
   }
 }

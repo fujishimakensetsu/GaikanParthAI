@@ -9,26 +9,13 @@ GitHub ActionsからGoogle Cloud Runへ、サービスアカウントキーを�
 
 ## 1. 環境変数の設定
 
-### Windows (PowerShell) の場合
-
-```powershell
-# あなたのGCPプロジェクトIDに置き換えてください
-$env:PROJECT_ID = "your-gcp-project-id"
-
-# GitHubのリポジトリ情報に置き換えてください
-$env:GITHUB_ORG = "your-github-username-or-org"
-$env:GITHUB_REPO = "your-repo-name"
-```
-
-### Mac/Linux (bash) の場合
-
 ```bash
 # あなたのGCPプロジェクトIDに置き換えてください
-export PROJECT_ID="your-gcp-project-id"
+export PROJECT_ID= gaikanperthai
 
 # GitHubのリポジトリ情報に置き換えてください
-export GITHUB_ORG="your-github-username-or-org"
-export GITHUB_REPO="your-repo-name"
+export GITHUB_ORG=fujishimakensetsu
+export GITHUB_REPO=GaikanParthAI
 ```
 
 ## 2. 必要なAPIを有効化

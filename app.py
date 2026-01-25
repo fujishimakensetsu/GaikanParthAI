@@ -456,15 +456,15 @@ def check_password():
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown("<p style='color: rgba(245,243,239,0.5); font-size: 0.85rem; margin-bottom: 0.5rem;'>ACCESS CODE</p>", unsafe_allow_html=True)
-        password = st.text_input("", type="password", label_visibility="collapsed", placeholder="Enter password")
+        st.markdown("<p style='color: rgba(245,243,239,0.5); font-size: 0.85rem; margin-bottom: 0.5rem;'>パスワードを入力</p>", unsafe_allow_html=True)
+        password = st.text_input("", type="password", label_visibility="collapsed", placeholder="パスワード")
 
         if password:
             if password == correct_password:
                 st.session_state.password_correct = True
                 st.rerun()
             else:
-                st.error("Invalid access code")
+                st.error("パスワードが正しくありません")
 
     return False
 
@@ -487,7 +487,7 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-MODEL_NAME = 'gemini-2.0-flash-exp-image-generation'
+MODEL_NAME = 'models/nano-banana-pro-preview'
 
 try:
     model = genai.GenerativeModel(MODEL_NAME)
@@ -513,47 +513,47 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # Section 01: Lighting
+    # Section 01: 時間帯設定
     st.markdown("""
     <div class="section-header">
         <div class="section-number"><span>01</span></div>
-        <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Lighting Mode</span>
+        <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">時間帯</span>
     </div>
     """, unsafe_allow_html=True)
 
     time_of_day = st.radio(
         "",
-        ["Daytime", "Nighttime"],
+        ["昼間（Daytime）", "夜間（Nighttime）"],
         index=0,
         label_visibility="collapsed"
     )
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Section 02: Options
+    # Section 02: 生成オプション
     st.markdown("""
     <div class="section-header">
         <div class="section-number"><span>02</span></div>
-        <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Enhancement Options</span>
+        <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">生成オプション</span>
     </div>
     """, unsafe_allow_html=True)
 
-    auto_background = st.checkbox("Auto-fill Background", value=True, help="Generate contextual scenery for white backgrounds")
-    enhance_texture = st.checkbox("Enhance Textures", value=True, help="Emphasize material details and surface quality")
+    auto_background = st.checkbox("背景を自動生成", value=True, help="白い背景部分に空や風景を自動で追加します")
+    enhance_texture = st.checkbox("質感を強調", value=True, help="コンクリート、ガラス、木材などの素材感を強調します")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Section 03: Custom Instructions
+    # Section 03: 追加指示
     st.markdown("""
     <div class="section-header">
         <div class="section-number"><span>03</span></div>
-        <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Custom Instructions</span>
+        <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">追加指示（任意）</span>
     </div>
     """, unsafe_allow_html=True)
 
     custom_prompt = st.text_area(
         "",
-        placeholder="e.g., Add vintage filter, emphasize glass reflections...",
+        placeholder="例：ヴィンテージ風に、ガラスの反射を強調、緑を多めに...",
         label_visibility="collapsed",
         height=100
     )
@@ -561,14 +561,15 @@ with st.sidebar:
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Processing info
+    is_daytime = "昼間" in time_of_day
     st.markdown(f"""
     <div class="processing-info">
-        <div style="color: rgba(245,243,239,0.7); font-weight: 500; margin-bottom: 0.5rem;">Processing Pipeline</div>
+        <div style="color: rgba(245,243,239,0.7); font-weight: 500; margin-bottom: 0.5rem;">処理内容</div>
         <ul style="list-style: none; padding: 0; margin: 0;">
-            <li>Structure analysis</li>
-            <li>{'Daylight' if time_of_day == 'Daytime' else 'Night'} GI enhancement</li>
-            {'<li>Background generation</li>' if auto_background else ''}
-            {'<li>Texture refinement</li>' if enhance_texture else ''}
+            <li>建物構造の解析</li>
+            <li>{'昼間' if is_daytime else '夜間'}のライティング適用</li>
+            {'<li>背景の自動生成</li>' if auto_background else ''}
+            {'<li>素材質感の強調</li>' if enhance_texture else ''}
         </ul>
     </div>
     """, unsafe_allow_html=True)
@@ -609,12 +610,12 @@ st.markdown("""
 st.markdown("""
 <div class="section-header">
     <div class="section-number"><span>01</span></div>
-    <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Upload Source</span>
+    <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">画像をアップロード</span>
 </div>
 """, unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader(
-    "Drop your architectural render here or click to browse",
+    "建築パース画像をドラッグ＆ドロップ、またはクリックして選択",
     type=["jpg", "jpeg", "png"],
     label_visibility="collapsed"
 )
@@ -628,7 +629,7 @@ if uploaded_file is not None:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         generate_btn = st.button(
-            "GENERATE ENHANCEMENT",
+            "高画質化を実行",
             type="primary",
             use_container_width=True
         )
@@ -641,16 +642,17 @@ if uploaded_file is not None:
         st.markdown("""
         <div class="section-header">
             <div class="section-number"><span>02</span></div>
-            <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Result</span>
+            <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">生成結果</span>
         </div>
         """, unsafe_allow_html=True)
 
         with st.spinner(""):
             # Custom loading message
+            is_daytime = "昼間" in time_of_day
             st.markdown(f"""
             <div style="text-align: center; padding: 2rem;">
                 <div style="font-family: 'DM Sans'; color: rgba(245,243,239,0.8); margin-bottom: 0.5rem;">
-                    Generating {'daytime' if time_of_day == 'Daytime' else 'nighttime'} visualization...
+                    {'昼間' if is_daytime else '夜間'}のビジュアライゼーションを生成中...
                 </div>
                 <div style="font-family: 'JetBrains Mono'; color: rgba(245,243,239,0.4); font-size: 0.7rem; letter-spacing: 0.2em;">
                     PROCESSING
@@ -660,7 +662,7 @@ if uploaded_file is not None:
 
             try:
                 # プロンプト作成
-                time_setting = "bright natural daylight, clear blue sky, warm sunlight" if time_of_day == "Daytime" else "dramatic night lighting, warm interior glow from windows, elegant evening atmosphere"
+                time_setting = "bright natural daylight, clear blue sky, warm sunlight" if is_daytime else "dramatic night lighting, warm interior glow from windows, elegant evening atmosphere"
 
                 prompt = f"""You are an expert architectural visualizer. Enhance this building exterior perspective with professional quality.
 
@@ -702,8 +704,8 @@ Deliver a stunning, professional architectural rendering."""
                     image_comparison(
                         img1=original_image,
                         img2=generated_image,
-                        label1="Before",
-                        label2="Enhanced",
+                        label1="変換前",
+                        label2="変換後",
                     )
 
                     st.markdown("<br>", unsafe_allow_html=True)
@@ -714,10 +716,11 @@ Deliver a stunning, professional architectural rendering."""
 
                     col1, col2, col3 = st.columns([2, 1, 2])
                     with col2:
+                        time_label = "daytime" if is_daytime else "nighttime"
                         st.download_button(
-                            label="DOWNLOAD",
+                            label="ダウンロード",
                             data=buf.getvalue(),
-                            file_name=f"archienhance_{time_of_day.lower()}_{uploaded_file.name.split('.')[0]}.png",
+                            file_name=f"archienhance_{time_label}_{uploaded_file.name.split('.')[0]}.png",
                             mime="image/png",
                             use_container_width=True
                         )
@@ -734,18 +737,18 @@ Deliver a stunning, professional architectural rendering."""
         st.markdown("""
         <div class="section-header">
             <div class="section-number"><span>02</span></div>
-            <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Preview</span>
+            <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">プレビュー</span>
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown('<div class="result-badge badge-before">Source</div>', unsafe_allow_html=True)
+        st.markdown('<div class="result-badge badge-before">元画像</div>', unsafe_allow_html=True)
         st.image(original_image, use_container_width=True)
 
 # Footer
 st.markdown("""
 <div class="custom-footer">
     <span>ArchiEnhance AI v2.0</span>
-    <span>Professional Architectural Visualization</span>
+    <span>建築パース高画質化ツール</span>
 </div>
 """, unsafe_allow_html=True)
 

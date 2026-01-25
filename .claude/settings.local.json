@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote set-url:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nGoogle Cloud Run デプロイ対応\n\n- Dockerfile追加（Cloud Run用コンテナ設定）\n- GitHub Actions ワークフロー追加（自動デプロイ）\n- 環境変数からAPIキー・パスワード取得に対応\n- requirements.txt エンコーディング修正\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nGitHub Actions から Cloud Build に変更\n\n- cloudbuild.yaml 追加（Cloud Build トリガー用）\n- GitHub Actions ワークフロー削除\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}

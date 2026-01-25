@@ -717,17 +717,20 @@ Deliver a stunning, professional architectural rendering."""
 
                     # ダウンロードボタン
                     buf = io.BytesIO()
-                    generated_image.save(buf, format="PNG", quality=95)
+                    generated_image.save(buf, format="PNG")
+                    buf.seek(0)
+                    image_bytes = buf.getvalue()
 
+                    time_label = "daytime" if is_daytime else "nighttime"
                     col1, col2, col3 = st.columns([2, 1, 2])
                     with col2:
-                        time_label = "daytime" if is_daytime else "nighttime"
                         st.download_button(
                             label="ダウンロード",
-                            data=buf.getvalue(),
+                            data=image_bytes,
                             file_name=f"archienhance_{time_label}_{uploaded_file.name.split('.')[0]}.png",
                             mime="image/png",
-                            use_container_width=True
+                            use_container_width=True,
+                            key="download_result"
                         )
                 else:
                     st.warning("画像の生成に失敗しました。再度お試しください。")

@@ -656,20 +656,11 @@ if uploaded_file is not None:
         </div>
         """, unsafe_allow_html=True)
 
-        with st.spinner(""):
-            # Custom loading message
-            is_daytime = "昼間" in time_of_day
-            st.markdown(f"""
-            <div style="text-align: center; padding: 2rem;">
-                <div style="font-family: 'DM Sans'; color: rgba(245,243,239,0.8); margin-bottom: 0.5rem;">
-                    {'昼間' if is_daytime else '夜間'}のビジュアライゼーションを生成中...
-                </div>
-                <div style="font-family: 'JetBrains Mono'; color: rgba(245,243,239,0.4); font-size: 0.7rem; letter-spacing: 0.2em;">
-                    PROCESSING
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+        is_daytime = "昼間" in time_of_day
+        generated_image = None
+        error_message = None
 
+        with st.spinner(f"{'昼間' if is_daytime else '夜間'}のビジュアライゼーションを生成中..."):
             try:
                 # プロンプト作成
                 time_setting = "bright natural daylight, clear blue sky, warm sunlight" if is_daytime else "dramatic night lighting, warm interior glow from windows, elegant evening atmosphere"
@@ -695,8 +686,6 @@ Deliver a stunning, professional architectural rendering."""
                 response = model.generate_content([prompt, original_image])
 
                 # 画像データの取り出し
-                generated_image = None
-
                 if hasattr(response, 'candidates') and response.candidates:
                     for part in response.candidates[0].content.parts:
                         if hasattr(part, 'inline_data') and part.inline_data:
@@ -704,41 +693,41 @@ Deliver a stunning, professional architectural rendering."""
                             generated_image = Image.open(io.BytesIO(image_data))
                             break
 
-                if generated_image:
-                    # 比較スライダー
-                    image_comparison(
-                        img1=original_image,
-                        img2=generated_image,
-                        label1="変換前",
-                        label2="変換後",
-                    )
-
-                    st.markdown("<br>", unsafe_allow_html=True)
-
-                    # ダウンロードボタン
-                    buf = io.BytesIO()
-                    generated_image.save(buf, format="PNG")
-                    buf.seek(0)
-                    image_bytes = buf.getvalue()
-
-                    time_label = "daytime" if is_daytime else "nighttime"
-                    col1, col2, col3 = st.columns([2, 1, 2])
-                    with col2:
-                        st.download_button(
-                            label="ダウンロード",
-                            data=image_bytes,
-                            file_name=f"archienhance_{time_label}_{uploaded_file.name.split('.')[0]}.png",
-                            mime="image/png",
-                            use_container_width=True,
-                            key="download_result"
-                        )
-                else:
-                    st.warning("画像の生成に失敗しました。再度お試しください。")
-                    if hasattr(response, 'text') and response.text:
-                        st.info(response.text)
-
             except Exception as e:
-                st.error(f"エラーが発生しました: {e}")
+                error_message = str(e)
+
+        # spinner外で結果を表示
+        if error_message:
+            st.error(f"エラーが発生しました: {error_message}")
+        elif generated_image:
+            # 比較スライダー
+            image_comparison(
+                img1=original_image,
+                img2=generated_image,
+                label1="変換前",
+                label2="変換後",
+            )
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # ダウンロードボタン（spinner外で表示）
+            buf = io.BytesIO()
+            generated_image.save(buf, format="PNG")
+            buf.seek(0)
+            image_bytes = buf.getvalue()
+
+            time_label = "daytime" if is_daytime else "nighttime"
+            col1, col2, col3 = st.columns([2, 1, 2])
+            with col2:
+                st.download_button(
+                    label="ダウンロード",
+                    data=image_bytes,
+                    file_name=f"archienhance_{time_label}_{uploaded_file.name.split('.')[0]}.png",
+                    mime="image/png",
+                    use_container_width=True
+                )
+        else:
+            st.warning("画像の生成に失敗しました。再度お試しください。")
 
     else:
         # Preview only

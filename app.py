@@ -6,21 +6,431 @@ from dotenv import load_dotenv
 from streamlit_image_comparison import image_comparison
 import io
 
-# --- ページ設定 (必ず一番最初に書く必要があります) ---
-st.set_page_config(page_title="ArchiEnhance AI", layout="wide")
+# --- ページ設定 ---
+st.set_page_config(
+    page_title="ArchiEnhance AI",
+    page_icon="",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# --- カスタムCSS ---
+st.markdown("""
+<style>
+    /* Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    /* Root variables */
+    :root {
+        --arch-dark: #0a0a0b;
+        --arch-charcoal: #141416;
+        --arch-slate: #1c1c1f;
+        --arch-steel: #2a2a2e;
+        --arch-mist: #f5f3ef;
+        --arch-cream: #ebe7df;
+        --arch-gold: #c9a962;
+        --arch-copper: #b87333;
+        --arch-blueprint: #1a3a5c;
+    }
+
+    /* Main app background */
+    .stApp {
+        background: linear-gradient(180deg, #0a0a0b 0%, #0d0d0e 100%);
+        background-image:
+            linear-gradient(rgba(26, 58, 92, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(26, 58, 92, 0.03) 1px, transparent 1px);
+        background-size: 100% 100%, 40px 40px;
+    }
+
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #141416 0%, #0a0a0b 100%);
+        border-right: 1px solid rgba(201, 169, 98, 0.1);
+    }
+
+    [data-testid="stSidebar"] .stMarkdown {
+        color: #f5f3ef;
+    }
+
+    /* Headers */
+    h1, h2, h3 {
+        font-family: 'Archivo Black', sans-serif !important;
+        color: #f5f3ef !important;
+        letter-spacing: 0.05em;
+    }
+
+    h1 {
+        background: linear-gradient(135deg, #c9a962 0%, #b87333 50%, #c9a962 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 2.5rem !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Body text */
+    p, span, label, .stMarkdown {
+        font-family: 'DM Sans', sans-serif !important;
+        color: #ebe7df;
+    }
+
+    /* Captions and small text */
+    .stCaption, small {
+        font-family: 'JetBrains Mono', monospace !important;
+        color: rgba(245, 243, 239, 0.4) !important;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-size: 0.7rem !important;
+    }
+
+    /* File uploader */
+    [data-testid="stFileUploader"] {
+        background: rgba(20, 20, 22, 0.7);
+        border: 2px dashed rgba(201, 169, 98, 0.3);
+        border-radius: 0;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+
+    [data-testid="stFileUploader"]:hover {
+        border-color: rgba(201, 169, 98, 0.6);
+        background: rgba(201, 169, 98, 0.05);
+    }
+
+    [data-testid="stFileUploader"] label {
+        color: #ebe7df !important;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        background: linear-gradient(135deg, #c9a962 0%, #b87333 100%);
+        color: #0a0a0b !important;
+        border: none;
+        border-radius: 0;
+        padding: 0.8rem 2rem;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+    }
+
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #d4b46d 0%, #c9843e 100%);
+        box-shadow: 0 0 30px rgba(201, 169, 98, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .stButton > button:active {
+        transform: translateY(0);
+    }
+
+    /* Secondary buttons */
+    .stDownloadButton > button {
+        background: rgba(42, 42, 46, 0.8) !important;
+        color: #ebe7df !important;
+        border: 1px solid rgba(201, 169, 98, 0.3) !important;
+    }
+
+    .stDownloadButton > button:hover {
+        background: rgba(201, 169, 98, 0.1) !important;
+        border-color: rgba(201, 169, 98, 0.6) !important;
+    }
+
+    /* Radio buttons */
+    [data-testid="stRadio"] > label {
+        color: rgba(245, 243, 239, 0.6) !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    [data-testid="stRadio"] div[role="radiogroup"] label {
+        background: rgba(20, 20, 22, 0.7);
+        border: 1px solid rgba(42, 42, 46, 0.8);
+        padding: 0.8rem 1.2rem;
+        margin: 0.3rem 0;
+        transition: all 0.3s ease;
+    }
+
+    [data-testid="stRadio"] div[role="radiogroup"] label:hover {
+        border-color: rgba(201, 169, 98, 0.4);
+        background: rgba(201, 169, 98, 0.05);
+    }
+
+    [data-testid="stRadio"] div[role="radiogroup"] label[data-checked="true"] {
+        border-color: rgba(201, 169, 98, 0.6);
+        background: rgba(201, 169, 98, 0.1);
+    }
+
+    /* Checkboxes */
+    [data-testid="stCheckbox"] {
+        background: rgba(20, 20, 22, 0.7);
+        border: 1px solid rgba(42, 42, 46, 0.8);
+        padding: 0.8rem 1rem;
+        margin: 0.5rem 0;
+        transition: all 0.3s ease;
+    }
+
+    [data-testid="stCheckbox"]:hover {
+        border-color: rgba(201, 169, 98, 0.4);
+    }
+
+    [data-testid="stCheckbox"] label span {
+        color: #ebe7df !important;
+    }
+
+    /* Text area */
+    .stTextArea textarea {
+        font-family: 'DM Sans', sans-serif !important;
+        background: rgba(20, 20, 22, 0.9) !important;
+        border: 1px solid rgba(42, 42, 46, 0.8) !important;
+        color: #ebe7df !important;
+        border-radius: 0 !important;
+    }
+
+    .stTextArea textarea:focus {
+        border-color: rgba(201, 169, 98, 0.5) !important;
+        box-shadow: 0 0 0 1px rgba(201, 169, 98, 0.2) !important;
+    }
+
+    .stTextArea textarea::placeholder {
+        color: rgba(245, 243, 239, 0.3) !important;
+    }
+
+    /* Info boxes */
+    .stAlert {
+        background: rgba(26, 58, 92, 0.1) !important;
+        border: 1px solid rgba(26, 58, 92, 0.3) !important;
+        border-radius: 0 !important;
+        color: #ebe7df !important;
+    }
+
+    /* Spinner */
+    .stSpinner > div {
+        border-color: #c9a962 transparent transparent transparent !important;
+    }
+
+    /* Divider */
+    hr {
+        border-color: rgba(201, 169, 98, 0.1) !important;
+    }
+
+    /* Image containers */
+    [data-testid="stImage"] {
+        border: 1px solid rgba(201, 169, 98, 0.1);
+        background: rgba(20, 20, 22, 0.5);
+    }
+
+    /* Columns gap */
+    [data-testid="column"] {
+        padding: 0.5rem;
+    }
+
+    /* Success message */
+    .stSuccess {
+        background: rgba(201, 169, 98, 0.1) !important;
+        border: 1px solid rgba(201, 169, 98, 0.3) !important;
+        color: #c9a962 !important;
+    }
+
+    /* Error message */
+    .stError {
+        background: rgba(220, 38, 38, 0.1) !important;
+        border: 1px solid rgba(220, 38, 38, 0.3) !important;
+    }
+
+    /* Custom header component */
+    .custom-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0 2rem 0;
+        border-bottom: 1px solid rgba(201, 169, 98, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .logo-mark {
+        width: 50px;
+        height: 50px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logo-mark::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 1px solid rgba(201, 169, 98, 0.5);
+        transform: rotate(45deg);
+    }
+
+    .logo-mark::after {
+        content: '';
+        position: absolute;
+        width: 70%;
+        height: 70%;
+        background: rgba(201, 169, 98, 0.1);
+        transform: rotate(45deg);
+    }
+
+    .logo-text {
+        color: #c9a962;
+        font-family: 'Archivo Black', sans-serif;
+        font-size: 1.2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Section headers */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .section-number {
+        width: 24px;
+        height: 24px;
+        border: 1px solid rgba(201, 169, 98, 0.5);
+        transform: rotate(45deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        color: #c9a962;
+    }
+
+    .section-number span {
+        transform: rotate(-45deg);
+    }
+
+    /* Glass panel effect */
+    .glass-panel {
+        background: rgba(20, 20, 22, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(201, 169, 98, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Processing info */
+    .processing-info {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        color: rgba(245, 243, 239, 0.5);
+        padding: 1rem;
+        background: rgba(26, 58, 92, 0.1);
+        border: 1px solid rgba(26, 58, 92, 0.2);
+    }
+
+    .processing-info li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .processing-info li::before {
+        content: '';
+        width: 4px;
+        height: 4px;
+        background: rgba(201, 169, 98, 0.5);
+        transform: rotate(45deg);
+    }
+
+    /* Footer */
+    .custom-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0.75rem 2rem;
+        background: rgba(10, 10, 11, 0.9);
+        border-top: 1px solid rgba(42, 42, 46, 0.3);
+        display: flex;
+        justify-content: space-between;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        color: rgba(245, 243, 239, 0.3);
+        z-index: 1000;
+    }
+
+    /* Ambient glow effects */
+    .ambient-glow {
+        position: fixed;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .glow-gold {
+        top: -200px;
+        left: 20%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(201, 169, 98, 0.05) 0%, transparent 70%);
+    }
+
+    .glow-blue {
+        bottom: -200px;
+        right: 20%;
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(circle, rgba(26, 58, 92, 0.08) 0%, transparent 70%);
+    }
+
+    /* Result label badges */
+    .result-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .badge-before {
+        background: rgba(42, 42, 46, 0.8);
+        border: 1px solid rgba(42, 42, 46, 0.5);
+        color: rgba(245, 243, 239, 0.6);
+    }
+
+    .badge-after {
+        background: rgba(201, 169, 98, 0.1);
+        border: 1px solid rgba(201, 169, 98, 0.3);
+        color: #c9a962;
+    }
+</style>
+
+<!-- Ambient glow effects -->
+<div class="ambient-glow glow-gold"></div>
+<div class="ambient-glow glow-blue"></div>
+""", unsafe_allow_html=True)
 
 # ==========================================
-# ▼▼▼ パスワード認証機能の追加ここから ▼▼▼
+# パスワード認証機能
 # ==========================================
 def check_password():
-    """パスワード認証が成功したらTrueを返す関数"""
+    """パスワード認証"""
     if "password_correct" not in st.session_state:
         st.session_state.password_correct = False
 
     if st.session_state.password_correct:
         return True
 
-    # パスワードを取得（st.secrets または 環境変数）
     try:
         correct_password = st.secrets["password"]
     except:
@@ -30,28 +440,40 @@ def check_password():
         st.error("パスワードが設定されていません。環境変数 APP_PASSWORD を確認してください。")
         return False
 
-    # パスワード入力フォーム
-    st.write("### 🔒 アクセス制限")
-    password = st.text_input("パスワードを入力してください", type="password")
+    # ログイン画面
+    st.markdown("""
+    <div style="text-align: center; padding: 4rem 0;">
+        <div class="logo-mark" style="margin: 0 auto 2rem auto;">
+            <span class="logo-text">A</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    if password:
-        if password == correct_password:
-            st.session_state.password_correct = True
-            st.rerun()  # 画面をリロード
-            return True
-        else:
-            st.error("パスワードが間違っています")
+    st.markdown("<h1 style='text-align: center;'>ARCHIENHANCE</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: rgba(245,243,239,0.4); font-family: JetBrains Mono; letter-spacing: 0.2em; font-size: 0.8rem;'>AI VISUALIZATION</p>", unsafe_allow_html=True)
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("<p style='color: rgba(245,243,239,0.5); font-size: 0.85rem; margin-bottom: 0.5rem;'>ACCESS CODE</p>", unsafe_allow_html=True)
+        password = st.text_input("", type="password", label_visibility="collapsed", placeholder="Enter password")
+
+        if password:
+            if password == correct_password:
+                st.session_state.password_correct = True
+                st.rerun()
+            else:
+                st.error("Invalid access code")
 
     return False
 
 if not check_password():
-    st.stop()  # 認証されていない場合はここで処理を停止
-# ==========================================
-# ▲▲▲ パスワード認証機能の追加ここまで ▲▲▲
-# ==========================================
+    st.stop()
 
-
-# --- 1. APIキーとモデルの設定 ---
+# ==========================================
+# APIキーとモデルの設定
+# ==========================================
 load_dotenv()
 
 try:
@@ -60,13 +482,12 @@ except:
     api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("APIキーが見つかりません。.envファイルまたはSecretsを確認してください。")
+    st.error("APIキーが見つかりません。")
     st.stop()
 
 genai.configure(api_key=api_key)
 
-# ★モデル設定: Nano Banana Pro (ユーザー指定)
-MODEL_NAME = 'models/nano-banana-pro-preview'
+MODEL_NAME = 'gemini-2.0-flash-exp-image-generation'
 
 try:
     model = genai.GenerativeModel(MODEL_NAME)
@@ -74,103 +495,259 @@ except Exception as e:
     st.error(f"モデルの読み込みに失敗しました: {e}")
     st.stop()
 
-# --- 2. サイドバー設定 ---
-st.sidebar.header("設定 🛠️")
-time_of_day = st.sidebar.radio("時間帯", ["Day (昼)", "Night (夜)"], index=1) 
-auto_background = st.sidebar.checkbox("背景の自動生成", value=True)
-enhance_texture = st.sidebar.checkbox("質感の強調", value=True)
-custom_prompt = st.sidebar.text_area("追加指示", placeholder="例: 空を青くして、モダンな雰囲気に")
+# ==========================================
+# サイドバー
+# ==========================================
+with st.sidebar:
+    st.markdown("""
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;">
+        <div style="width: 32px; height: 32px; border: 1px solid rgba(201,169,98,0.5); transform: rotate(45deg); display: flex; align-items: center; justify-content: center;">
+            <span style="transform: rotate(-45deg); color: #c9a962; font-family: 'Archivo Black'; font-size: 0.9rem;">A</span>
+        </div>
+        <div>
+            <div style="font-family: 'Archivo Black'; color: #f5f3ef; font-size: 1rem; letter-spacing: 0.05em;">ARCHIENHANCE</div>
+            <div style="font-family: 'JetBrains Mono'; color: rgba(245,243,239,0.4); font-size: 0.6rem; letter-spacing: 0.15em;">AI VISUALIZATION</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- 3. メイン画面 ---
-st.title("ArchiEnhance AI 🏗️")
-st.caption(f"Powered by {MODEL_NAME}")
+    st.markdown("---")
 
-uploaded_file = st.file_uploader("建築パース画像をアップロード", type=["jpg", "jpeg", "png"])
+    # Section 01: Lighting
+    st.markdown("""
+    <div class="section-header">
+        <div class="section-number"><span>01</span></div>
+        <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Lighting Mode</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    time_of_day = st.radio(
+        "",
+        ["Daytime", "Nighttime"],
+        index=0,
+        label_visibility="collapsed"
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Section 02: Options
+    st.markdown("""
+    <div class="section-header">
+        <div class="section-number"><span>02</span></div>
+        <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Enhancement Options</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    auto_background = st.checkbox("Auto-fill Background", value=True, help="Generate contextual scenery for white backgrounds")
+    enhance_texture = st.checkbox("Enhance Textures", value=True, help="Emphasize material details and surface quality")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Section 03: Custom Instructions
+    st.markdown("""
+    <div class="section-header">
+        <div class="section-number"><span>03</span></div>
+        <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Custom Instructions</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    custom_prompt = st.text_area(
+        "",
+        placeholder="e.g., Add vintage filter, emphasize glass reflections...",
+        label_visibility="collapsed",
+        height=100
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Processing info
+    st.markdown(f"""
+    <div class="processing-info">
+        <div style="color: rgba(245,243,239,0.7); font-weight: 500; margin-bottom: 0.5rem;">Processing Pipeline</div>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+            <li>Structure analysis</li>
+            <li>{'Daylight' if time_of_day == 'Daytime' else 'Night'} GI enhancement</li>
+            {'<li>Background generation</li>' if auto_background else ''}
+            {'<li>Texture refinement</li>' if enhance_texture else ''}
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ==========================================
+# メインコンテンツ
+# ==========================================
+
+# Header
+st.markdown("""
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 0 2rem 0; border-bottom: 1px solid rgba(201,169,98,0.1); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="position: relative; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+            <div style="position: absolute; width: 100%; height: 100%; border: 1px solid rgba(201,169,98,0.5); transform: rotate(45deg);"></div>
+            <div style="position: absolute; width: 70%; height: 70%; background: rgba(201,169,98,0.1); transform: rotate(45deg);"></div>
+            <span style="position: relative; color: #c9a962; font-family: 'Archivo Black'; font-size: 1.1rem;">A</span>
+        </div>
+        <div>
+            <h1 style="margin: 0; font-size: 1.8rem;">ARCHIENHANCE</h1>
+            <p style="margin: 0; font-family: 'JetBrains Mono'; color: rgba(245,243,239,0.4); font-size: 0.65rem; letter-spacing: 0.2em;">AI VISUALIZATION</p>
+        </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.5rem; font-family: 'JetBrains Mono'; color: rgba(245,243,239,0.3); font-size: 0.7rem;">
+        <div style="width: 6px; height: 6px; background: #c9a962; border-radius: 50%; animation: pulse 2s infinite;"></div>
+        <span>Powered by Gemini</span>
+    </div>
+</div>
+
+<style>
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# File uploader
+st.markdown("""
+<div class="section-header">
+    <div class="section-number"><span>01</span></div>
+    <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Upload Source</span>
+</div>
+""", unsafe_allow_html=True)
+
+uploaded_file = st.file_uploader(
+    "Drop your architectural render here or click to browse",
+    type=["jpg", "jpeg", "png"],
+    label_visibility="collapsed"
+)
 
 if uploaded_file is not None:
-    # 画像を読み込む
     original_image = Image.open(uploaded_file)
-    
-    # --- レイアウト調整 ---
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        st.write("### 📄 元画像")
-        st.image(original_image, use_container_width=True)
-    
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Generate button
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.write("### ⚙️ 生成設定")
-        st.info(f"時間: {time_of_day} | 背景: {'ON' if auto_background else 'OFF'}")
-        
-        # 生成ボタン
-        generate_btn = st.button("Enhance Graphic (生成開始) ✨", type="primary", use_container_width=True)
+        generate_btn = st.button(
+            "GENERATE ENHANCEMENT",
+            type="primary",
+            use_container_width=True
+        )
 
-    # --- 生成処理 (画面幅いっぱいに表示するためカラム外へ) ---
+    st.markdown("<br>", unsafe_allow_html=True)
+
     if generate_btn:
-        st.divider() 
-        st.write("### 🚀 生成結果")
-        
-        with st.spinner(f"{MODEL_NAME} が高画質生成中... (しばらくお待ちください)"):
-            try:
-                # --- プロンプト作成 (高画質化の指示を追加) ---
-                base_prompt = f"Enhance this architectural image. Lighting: {time_of_day}."
-                
-                # ★画質向上のための呪文を追加
-                quality_boost = " 8k resolution, photorealistic, highly detailed, sharp focus, architectural photography masterpiece, professional rendering."
-                
-                prompt = base_prompt + quality_boost
-                
-                if auto_background:
-                    prompt += " Add realistic high-quality background context."
-                if enhance_texture:
-                    prompt += " Emphasize realistic textures and material details."
-                if custom_prompt:
-                    prompt += f" {custom_prompt}"
+        st.markdown("---")
 
-                # 画像生成リクエスト
-                response = model.generate_content([prompt, original_image])
-                
+        st.markdown("""
+        <div class="section-header">
+            <div class="section-number"><span>02</span></div>
+            <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Result</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.spinner(""):
+            # Custom loading message
+            st.markdown(f"""
+            <div style="text-align: center; padding: 2rem;">
+                <div style="font-family: 'DM Sans'; color: rgba(245,243,239,0.8); margin-bottom: 0.5rem;">
+                    Generating {'daytime' if time_of_day == 'Daytime' else 'nighttime'} visualization...
+                </div>
+                <div style="font-family: 'JetBrains Mono'; color: rgba(245,243,239,0.4); font-size: 0.7rem; letter-spacing: 0.2em;">
+                    PROCESSING
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            try:
+                # プロンプト作成
+                time_setting = "bright natural daylight, clear blue sky, warm sunlight" if time_of_day == "Daytime" else "dramatic night lighting, warm interior glow from windows, elegant evening atmosphere"
+
+                prompt = f"""You are an expert architectural visualizer. Enhance this building exterior perspective with professional quality.
+
+LIGHTING: {time_setting}
+
+REQUIREMENTS:
+- Significantly enhance global illumination and ambient occlusion
+- Deepen shadows for better depth perception
+- Maintain the original architectural design and proportions
+- Output a photorealistic, high-quality architectural visualization
+
+{"BACKGROUND: If the image has white or empty background areas, generate a realistic, contextual environment (sky, landscape, trees, or urban context) that seamlessly blends with the building and lighting." if auto_background else ""}
+
+{"TEXTURES: Enhance all surface materials (concrete, glass, wood, metal, stone) to appear highly detailed and photorealistic." if enhance_texture else ""}
+
+{f"ADDITIONAL INSTRUCTIONS: {custom_prompt}" if custom_prompt else ""}
+
+Deliver a stunning, professional architectural rendering."""
+
+                response = model.generate_content(
+                    [prompt, original_image],
+                    generation_config=genai.GenerationConfig(
+                        response_modalities=['Text', 'Image']
+                    )
+                )
+
                 # 画像データの取り出し
                 generated_image = None
-                
-                if hasattr(response, 'parts'):
-                    for part in response.parts:
+
+                if hasattr(response, 'candidates') and response.candidates:
+                    for part in response.candidates[0].content.parts:
                         if hasattr(part, 'inline_data') and part.inline_data:
                             image_data = part.inline_data.data
                             generated_image = Image.open(io.BytesIO(image_data))
                             break
-                
-                if not generated_image and hasattr(response, 'images'):
-                        if len(response.images) > 0:
-                            generated_image = response.images[0]
 
-                # 結果の表示
                 if generated_image:
                     # 比較スライダー
                     image_comparison(
                         img1=original_image,
                         img2=generated_image,
                         label1="Before",
-                        label2="After",
+                        label2="Enhanced",
                     )
-                    
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
                     # ダウンロードボタン
                     buf = io.BytesIO()
-                    # 保存形式をPNGにして画質劣化を防ぐ
-                    generated_image.save(buf, format="PNG")
-                    
-                    col_dl1, col_dl2 = st.columns([3, 1])
-                    with col_dl2:
+                    generated_image.save(buf, format="PNG", quality=95)
+
+                    col1, col2, col3 = st.columns([2, 1, 2])
+                    with col2:
                         st.download_button(
-                            label="生成画像をダウンロード (高画質PNG) 📥",
+                            label="DOWNLOAD",
                             data=buf.getvalue(),
-                            file_name="enhanced_image.png",
+                            file_name=f"archienhance_{time_of_day.lower()}_{uploaded_file.name.split('.')[0]}.png",
                             mime="image/png",
                             use_container_width=True
                         )
                 else:
-                    st.warning("画像データが取得できませんでした。")
-                    st.write(response.text)
+                    st.warning("画像の生成に失敗しました。再度お試しください。")
+                    if hasattr(response, 'text') and response.text:
+                        st.info(response.text)
 
             except Exception as e:
                 st.error(f"エラーが発生しました: {e}")
+
+    else:
+        # Preview only
+        st.markdown("""
+        <div class="section-header">
+            <div class="section-number"><span>02</span></div>
+            <span style="color: #ebe7df; font-weight: 500; letter-spacing: 0.05em;">Preview</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown('<div class="result-badge badge-before">Source</div>', unsafe_allow_html=True)
+        st.image(original_image, use_container_width=True)
+
+# Footer
+st.markdown("""
+<div class="custom-footer">
+    <span>ArchiEnhance AI v2.0</span>
+    <span>Professional Architectural Visualization</span>
+</div>
+""", unsafe_allow_html=True)
+
+# Bottom padding for footer
+st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)

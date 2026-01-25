@@ -225,11 +225,38 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
         }
         .compare-handle:hover {
             border-color: #c9a962;
             box-shadow: 0 0 20px rgba(201, 169, 98, 0.3);
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 11, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-modal {
+            background: rgba(20, 20, 22, 0.95);
+            border: 1px solid rgba(201, 169, 98, 0.3);
+            padding: 48px 64px;
+            text-align: center;
+        }
+        .loading-spinner-large {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(201, 169, 98, 0.2);
+            border-top-color: #c9a962;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
         }
 
         /* Fade in animation */
@@ -287,6 +314,15 @@
                 ログイン
             </button>
             <p id="loginError" class="text-red-400 text-sm mt-3 text-center hidden">パスワードが正しくありません</p>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-modal corner-accent">
+            <div class="loading-spinner-large"></div>
+            <p class="text-arch-cream font-medium text-lg mb-2">生成中...</p>
+            <p class="text-arch-mist/50 text-sm font-mono">AIが画像を処理しています</p>
         </div>
     </div>
 
@@ -675,10 +711,12 @@
             const btn = document.getElementById('generateBtn');
             const btnText = document.getElementById('generateBtnText');
             const spinner = document.getElementById('generateSpinner');
+            const loadingOverlay = document.getElementById('loadingOverlay');
 
             btn.disabled = true;
             btnText.textContent = '生成中...';
             spinner.classList.remove('hidden');
+            loadingOverlay.classList.remove('hidden');
 
             try {
                 const timeOfDay = document.querySelector('input[name="timeOfDay"]:checked').value;
@@ -792,6 +830,7 @@ ${userInstruction}
                 btn.disabled = false;
                 btnText.textContent = '高画質化を実行';
                 spinner.classList.add('hidden');
+                loadingOverlay.classList.add('hidden');
             }
         };
 

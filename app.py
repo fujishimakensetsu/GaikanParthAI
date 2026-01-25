@@ -45,7 +45,17 @@ st.markdown("""
     /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+
+    /* Keep header for sidebar toggle button */
+    header[data-testid="stHeader"] {
+        background: transparent;
+        backdrop-filter: none;
+    }
+
+    /* Hide decoration but keep toggle */
+    header[data-testid="stHeader"]::before {
+        display: none;
+    }
 
     /* Sidebar styling */
     [data-testid="stSidebar"] {
@@ -682,12 +692,7 @@ REQUIREMENTS:
 
 Deliver a stunning, professional architectural rendering."""
 
-                response = model.generate_content(
-                    [prompt, original_image],
-                    generation_config=genai.GenerationConfig(
-                        response_modalities=['Text', 'Image']
-                    )
-                )
+                response = model.generate_content([prompt, original_image])
 
                 # 画像データの取り出し
                 generated_image = None

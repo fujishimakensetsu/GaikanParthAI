@@ -483,9 +483,9 @@
                         <!-- After Image (base) -->
                         <img id="afterImage" src="" alt="Enhanced" class="absolute inset-0 w-full h-full object-contain" style="background: radial-gradient(ellipse at center, #1c1c1f 0%, #0a0a0b 100%);">
 
-                        <!-- Before Image (clipped) -->
-                        <div id="beforeClip" class="absolute top-0 left-0 h-full overflow-hidden" style="width: 50%;">
-                            <img id="beforeImage" src="" alt="Original" class="absolute top-0 left-0 h-full object-contain" style="background: radial-gradient(ellipse at center, #1c1c1f 0%, #0a0a0b 100%);">
+                        <!-- Before Image (clipped with clip-path) -->
+                        <div id="beforeClip" class="absolute inset-0" style="clip-path: inset(0 50% 0 0);">
+                            <img id="beforeImage" src="" alt="Original" class="absolute inset-0 w-full h-full object-contain" style="background: radial-gradient(ellipse at center, #1c1c1f 0%, #0a0a0b 100%);">
                         </div>
 
                         <!-- Slider -->
@@ -822,16 +822,12 @@ ${userInstruction}
             const sliderLine = document.getElementById('sliderLine');
             const sliderHandle = document.getElementById('sliderHandle');
             const sliderPercent = document.getElementById('sliderPercent');
-            const beforeImage = document.getElementById('beforeImage');
-            const container = document.getElementById('compareContainer');
 
-            beforeClip.style.width = `${percentage}%`;
+            // clip-pathで右側からクリップ（画像サイズは固定のまま）
+            beforeClip.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
             sliderLine.style.left = `${percentage}%`;
             sliderHandle.style.left = `${percentage}%`;
             sliderPercent.textContent = `${Math.round(percentage)}%`;
-
-            // Adjust before image width to match container
-            beforeImage.style.width = `${container.clientWidth}px`;
         }
 
         // Option listeners
@@ -877,14 +873,7 @@ ${userInstruction}
             document.getElementById('errorSection').classList.remove('hidden');
         }
 
-        // Resize handler for compare slider
-        window.addEventListener('resize', () => {
-            if (!document.getElementById('resultSection').classList.contains('hidden')) {
-                const beforeImage = document.getElementById('beforeImage');
-                const container = document.getElementById('compareContainer');
-                beforeImage.style.width = `${container.clientWidth}px`;
-            }
-        });
+        // Resize handler - clip-path方式では特別な処理は不要
     </script>
 </body>
 </html>

@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArchiEnhance AI | Architectural Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        arch: {
+                            dark: '#0a0a0b',
+                            charcoal: '#141416',
+                            slate: '#1c1c1f',
+                            steel: '#2a2a2e',
+                            mist: '#f5f3ef',
+                            cream: '#ebe7df',
+                            gold: '#c9a962',
+                            copper: '#b87333',
+                            blueprint: '#1a3a5c',
+                        }
+                    },
+                    fontFamily: {
+                        display: ['"Archivo Black"', 'sans-serif'],
+                        body: ['"DM Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #0a0a0b;
+            color: #f5f3ef;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* Blueprint Grid */
+        .blueprint-grid {
+            background-image:
+                linear-gradient(rgba(26, 58, 92, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(26, 58, 92, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Noise overlay */
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            opacity: 0.015;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            z-index: 9999;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #141416; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2e; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c9a962; }
+
+        /* Glass panel */
+        .glass-panel {
+            background: rgba(20, 20, 22, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(201, 169, 98, 0.1);
+        }
+
+        /* Gold glow */
+        .gold-glow {
+            box-shadow: 0 0 60px rgba(201, 169, 98, 0.1), 0 0 100px rgba(201, 169, 98, 0.05);
+        }
+
+        /* Corner accents */
+        .corner-accent { position: relative; }
+        .corner-accent::before,
+        .corner-accent::after {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            border-color: rgba(201, 169, 98, 0.3);
+            border-style: solid;
+        }
+        .corner-accent::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+        .corner-accent::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+        /* Custom checkbox */
+        .custom-checkbox {
+            appearance: none;
+            width: 18px; height: 18px;
+            background: rgba(20, 20, 22, 0.9);
+            border: 1px solid rgba(42, 42, 46, 0.8);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .custom-checkbox:checked {
+            background: rgba(201, 169, 98, 0.2);
+            border-color: rgba(201, 169, 98, 0.6);
+        }
+        .custom-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 5px; top: 2px;
+            width: 5px; height: 9px;
+            border: solid #c9a962;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        /* Custom radio */
+        .custom-radio {
+            appearance: none;
+            width: 16px; height: 16px;
+            border: 1px solid rgba(42, 42, 46, 0.8);
+            border-radius: 50%;
+            background: rgba(20, 20, 22, 0.9);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .custom-radio:checked {
+            border-color: rgba(201, 169, 98, 0.6);
+        }
+        .custom-radio:checked::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 8px; height: 8px;
+            background: #c9a962;
+            border-radius: 50%;
+        }
+
+        /* File drop zone */
+        .drop-zone {
+            border: 2px dashed rgba(201, 169, 98, 0.3);
+            transition: all 0.3s ease;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: rgba(201, 169, 98, 0.6);
+            background: rgba(201, 169, 98, 0.05);
+        }
+
+        /* Button hover effects */
+        .btn-primary {
+            background: linear-gradient(135deg, #c9a962 0%, #b87333 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 0 30px rgba(201, 169, 98, 0.3);
+            transform: translateY(-1px);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(42, 42, 46, 0.8);
+            border: 1px solid rgba(201, 169, 98, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(201, 169, 98, 0.1);
+            border-color: rgba(201, 169, 98, 0.6);
+        }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #c9a962 0%, #b87333 50%, #c9a962 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Pulse animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse { animation: pulse 2s infinite; }
+
+        /* Spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            border: 2px solid rgba(201, 169, 98, 0.2);
+            border-top-color: #c9a962;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Compare slider */
+        .compare-container {
+            position: relative;
+            overflow: hidden;
+            cursor: ew-resize;
+            user-select: none;
+        }
+        .compare-slider-line {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, transparent, #c9a962, transparent);
+            z-index: 10;
+        }
+        .compare-handle {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 36px; height: 36px;
+            background: #141416;
+            border: 1px solid rgba(201, 169, 98, 0.5);
+            z-index: 11;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .compare-handle:hover {
+            border-color: #c9a962;
+            box-shadow: 0 0 20px rgba(201, 169, 98, 0.3);
+        }
+
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        /* Selection */
+        ::selection {
+            background: rgba(201, 169, 98, 0.3);
+            color: #f5f3ef;
+        }
+
+        /* Hide elements */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="blueprint-grid">
+    <div class="noise-overlay"></div>
+
+    <!-- Ambient glow effects -->
+    <div class="fixed pointer-events-none z-0" style="top: -200px; left: 20%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(201, 169, 98, 0.05) 0%, transparent 70%);"></div>
+    <div class="fixed pointer-events-none z-0" style="bottom: -200px; right: 20%; width: 350px; height: 350px; background: radial-gradient(circle, rgba(26, 58, 92, 0.08) 0%, transparent 70%);"></div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex flex-col items-center justify-center px-4">
+        <div class="text-center mb-12 fade-in">
+            <!-- Logo -->
+            <div class="relative w-16 h-16 mx-auto mb-8">
+                <div class="absolute inset-0 border border-arch-gold/50 rotate-45"></div>
+                <div class="absolute inset-2 bg-arch-gold/10 rotate-45"></div>
+                <span class="absolute inset-0 flex items-center justify-center text-arch-gold font-display text-2xl">A</span>
+            </div>
+
+            <h1 class="font-display text-4xl gradient-text tracking-wider mb-2">ARCHIENHANCE</h1>
+            <p class="font-mono text-xs text-arch-mist/40 tracking-[0.3em]">AI VISUALIZATION</p>
+        </div>
+
+        <div class="w-full max-w-sm glass-panel p-8 corner-accent fade-in" style="animation-delay: 0.1s;">
+            <p class="text-arch-cream/60 text-sm mb-3">パスワードを入力</p>
+            <input
+                type="password"
+                id="passwordInput"
+                placeholder="パスワード"
+                class="w-full bg-arch-charcoal/90 border border-arch-steel text-arch-cream px-4 py-3 mb-4 focus:outline-none focus:border-arch-gold/50 transition-colors placeholder-arch-mist/30 font-body"
+            >
+            <button
+                onclick="checkPassword()"
+                class="w-full btn-primary text-arch-dark font-semibold py-3 uppercase tracking-wider text-sm"
+            >
+                ログイン
+            </button>
+            <p id="loginError" class="text-red-400 text-sm mt-3 text-center hidden">パスワードが正しくありません</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden min-h-screen">
+        <div class="flex min-h-screen">
+            <!-- Sidebar -->
+            <aside class="w-72 bg-gradient-to-b from-arch-charcoal to-arch-dark border-r border-arch-gold/10 p-6 flex flex-col">
+                <!-- Logo -->
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="relative w-8 h-8">
+                        <div class="absolute inset-0 border border-arch-gold/50 rotate-45"></div>
+                        <span class="absolute inset-0 flex items-center justify-center text-arch-gold font-display text-sm">A</span>
+                    </div>
+                    <div>
+                        <div class="font-display text-arch-mist text-sm tracking-wide">ARCHIENHANCE</div>
+                        <div class="font-mono text-arch-mist/40 text-[10px] tracking-[0.15em]">AI VISUALIZATION</div>
+                    </div>
+                </div>
+
+                <hr class="border-arch-gold/10 mb-6">
+
+                <!-- Section 01: Time of day -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-6 h-6 border border-arch-gold/50 rotate-45 flex items-center justify-center">
+                            <span class="-rotate-45 text-arch-gold font-mono text-xs">01</span>
+                        </div>
+                        <span class="text-arch-cream font-medium tracking-wide">時間帯</span>
+                    </div>
+
+                    <label class="flex items-center gap-3 p-3 bg-arch-charcoal/70 border border-arch-steel/80 mb-2 cursor-pointer hover:border-arch-gold/40 transition-colors">
+                        <input type="radio" name="timeOfDay" value="daytime" checked class="custom-radio">
+                        <span class="text-arch-cream text-sm">昼間（Daytime）</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 bg-arch-charcoal/70 border border-arch-steel/80 cursor-pointer hover:border-arch-gold/40 transition-colors">
+                        <input type="radio" name="timeOfDay" value="nighttime" class="custom-radio">
+                        <span class="text-arch-cream text-sm">夜間（Nighttime）</span>
+                    </label>
+                </div>
+
+                <!-- Section 02: Options -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-6 h-6 border border-arch-gold/50 rotate-45 flex items-center justify-center">
+                            <span class="-rotate-45 text-arch-gold font-mono text-xs">02</span>
+                        </div>
+                        <span class="text-arch-cream font-medium tracking-wide">生成オプション</span>
+                    </div>
+
+                    <label class="flex items-center gap-3 p-3 bg-arch-charcoal/70 border border-arch-steel/80 mb-2 cursor-pointer hover:border-arch-gold/40 transition-colors">
+                        <input type="checkbox" id="autoBackground" checked class="custom-checkbox">
+                        <span class="text-arch-cream text-sm">背景を自動生成</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 bg-arch-charcoal/70 border border-arch-steel/80 cursor-pointer hover:border-arch-gold/40 transition-colors">
+                        <input type="checkbox" id="enhanceTexture" checked class="custom-checkbox">
+                        <span class="text-arch-cream text-sm">質感を強調</span>
+                    </label>
+                </div>
+
+                <!-- Section 03: Custom prompt -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-6 h-6 border border-arch-gold/50 rotate-45 flex items-center justify-center">
+                            <span class="-rotate-45 text-arch-gold font-mono text-xs">03</span>
+                        </div>
+                        <span class="text-arch-cream font-medium tracking-wide">追加指示（任意）</span>
+                    </div>
+
+                    <textarea
+                        id="customPrompt"
+                        placeholder="例：ヴィンテージ風に、ガラスの反射を強調、緑を多めに..."
+                        class="w-full h-24 bg-arch-charcoal/90 border border-arch-steel text-arch-cream px-3 py-2 text-sm focus:outline-none focus:border-arch-gold/50 transition-colors placeholder-arch-mist/30 resize-none"
+                    ></textarea>
+                </div>
+
+                <!-- Processing info -->
+                <div id="processingInfo" class="mt-auto p-4 bg-arch-blueprint/10 border border-arch-blueprint/20 font-mono text-xs">
+                    <div class="text-arch-mist/70 font-medium mb-2">処理内容</div>
+                    <ul class="space-y-2 text-arch-mist/50" id="processingList">
+                        <li class="flex items-center gap-2">
+                            <span class="w-1 h-1 bg-arch-gold/50 rotate-45"></span>
+                            建物構造の解析
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="w-1 h-1 bg-arch-gold/50 rotate-45"></span>
+                            <span id="lightingText">昼間のライティング適用</span>
+                        </li>
+                        <li id="bgListItem" class="flex items-center gap-2">
+                            <span class="w-1 h-1 bg-arch-gold/50 rotate-45"></span>
+                            背景の自動生成
+                        </li>
+                        <li id="textureListItem" class="flex items-center gap-2">
+                            <span class="w-1 h-1 bg-arch-gold/50 rotate-45"></span>
+                            素材質感の強調
+                        </li>
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-8 pb-20 overflow-y-auto">
+                <!-- Header -->
+                <div class="flex items-center justify-between pb-6 mb-8 border-b border-arch-gold/10">
+                    <div class="flex items-center gap-4">
+                        <div class="relative w-12 h-12">
+                            <div class="absolute inset-0 border border-arch-gold/50 rotate-45"></div>
+                            <div class="absolute inset-1.5 bg-arch-gold/10 rotate-45"></div>
+                            <span class="absolute inset-0 flex items-center justify-center text-arch-gold font-display text-lg">A</span>
+                        </div>
+                        <div>
+                            <h1 class="font-display text-2xl gradient-text tracking-wide">ARCHIENHANCE</h1>
+                            <p class="font-mono text-arch-mist/40 text-xs tracking-[0.2em]">AI VISUALIZATION</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 font-mono text-arch-mist/30 text-xs">
+                        <div class="w-1.5 h-1.5 bg-arch-gold rounded-full pulse"></div>
+                        <span>Powered by Gemini</span>
+                    </div>
+                </div>
+
+                <!-- API Key Input -->
+                <div class="mb-8 glass-panel p-6 corner-accent">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-6 h-6 border border-arch-gold/50 rotate-45 flex items-center justify-center">
+                            <span class="-rotate-45 text-arch-gold font-mono text-xs">00</span>
+                        </div>
+                        <span class="text-arch-cream font-medium tracking-wide">Gemini API キー</span>
+                    </div>
+                    <div class="flex gap-3">
+                        <input
+                            type="password"
+                            id="apiKeyInput"
+                            placeholder="AIzaSy..."
+                            class="flex-1 bg-arch-charcoal/90 border border-arch-steel text-arch-cream px-4 py-3 focus:outline-none focus:border-arch-gold/50 transition-colors placeholder-arch-mist/30 font-mono text-sm"
+                        >
+                        <button
+                            onclick="saveApiKey()"
+                            class="btn-secondary text-arch-cream px-6 py-3 font-medium text-sm"
+                        >
+                            保存
+                        </button>
+                    </div>
+                    <p id="apiKeyStatus" class="mt-2 text-xs font-mono"></p>
+                </div>
+
+                <!-- File Upload -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-6 h-6 border border-arch-gold/50 rotate-45 flex items-center justify-center">
+                            <span class="-rotate-45 text-arch-gold font-mono text-xs">01</span>
+                        </div>
+                        <span class="text-arch-cream font-medium tracking-wide">画像をアップロード</span>
+                    </div>
+
+                    <div
+                        id="dropZone"
+                        class="drop-zone glass-panel p-12 text-center cursor-pointer"
+                        onclick="document.getElementById('fileInput').click()"
+                    >
+                        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/jpg" class="hidden" onchange="handleFileSelect(event)">
+                        <div class="text-arch-cream/60 mb-2">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-arch-gold/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <p class="text-sm">建築パース画像をドラッグ＆ドロップ</p>
+                            <p class="text-xs text-arch-mist/40 mt-1">または クリックして選択</p>
+                        </div>
+                        <p class="text-xs font-mono text-arch-mist/30 mt-4">JPG, JPEG, PNG</p>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <div id="generateSection" class="hidden mb-8">
+                    <div class="flex justify-center">
+                        <button
+                            id="generateBtn"
+                            onclick="generateImage()"
+                            class="btn-primary text-arch-dark font-semibold py-4 px-12 uppercase tracking-wider text-sm flex items-center gap-3"
+                        >
+                            <span id="generateBtnText">高画質化を実行</span>
+                            <div id="generateSpinner" class="hidden w-4 h-4 spinner"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Section -->
+                <div id="previewSection" class="hidden mb-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-6 h-6 border border-arch-gold/50 rotate-45 flex items-center justify-center">
+                            <span class="-rotate-45 text-arch-gold font-mono text-xs">02</span>
+                        </div>
+                        <span class="text-arch-cream font-medium tracking-wide">プレビュー</span>
+                    </div>
+
+                    <div class="glass-panel p-4 corner-accent">
+                        <div class="inline-block px-3 py-1.5 bg-arch-steel/80 border border-arch-steel/50 mb-3">
+                            <span class="text-arch-mist/60 font-mono text-xs tracking-wider uppercase">元画像</span>
+                        </div>
+                        <img id="previewImage" src="" alt="Preview" class="w-full max-h-[500px] object-contain">
+                    </div>
+                </div>
+
+                <!-- Result Section -->
+                <div id="resultSection" class="hidden mb-8 fade-in">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-6 h-6 border border-arch-gold/50 rotate-45 flex items-center justify-center">
+                            <span class="-rotate-45 text-arch-gold font-mono text-xs">02</span>
+                        </div>
+                        <span class="text-arch-cream font-medium tracking-wide">生成結果</span>
+                    </div>
+
+                    <!-- Compare Slider -->
+                    <div
+                        id="compareContainer"
+                        class="compare-container glass-panel corner-accent relative group"
+                        style="height: 550px;"
+                    >
+                        <!-- After Image (base) -->
+                        <img id="afterImage" src="" alt="Enhanced" class="absolute inset-0 w-full h-full object-contain" style="background: radial-gradient(ellipse at center, #1c1c1f 0%, #0a0a0b 100%);">
+
+                        <!-- Before Image (clipped) -->
+                        <div id="beforeClip" class="absolute top-0 left-0 h-full overflow-hidden" style="width: 50%;">
+                            <img id="beforeImage" src="" alt="Original" class="absolute top-0 left-0 h-full object-contain" style="background: radial-gradient(ellipse at center, #1c1c1f 0%, #0a0a0b 100%);">
+                        </div>
+
+                        <!-- Slider -->
+                        <div id="sliderLine" class="compare-slider-line" style="left: 50%;"></div>
+                        <div id="sliderHandle" class="compare-handle" style="left: 50%;">
+                            <div class="-rotate-45 flex items-center gap-0.5">
+                                <svg class="w-3 h-3 text-arch-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                                <svg class="w-3 h-3 text-arch-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Labels -->
+                        <div class="absolute top-4 left-4 z-20 px-3 py-1.5 bg-arch-charcoal/90 border border-arch-steel/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="text-arch-mist/70 text-xs font-mono tracking-wider uppercase">Before</span>
+                        </div>
+                        <div class="absolute top-4 right-4 z-20 px-3 py-1.5 bg-arch-gold/10 border border-arch-gold/30 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="text-arch-gold text-xs font-mono tracking-wider uppercase">Enhanced</span>
+                        </div>
+
+                        <!-- Bottom info -->
+                        <div class="absolute bottom-0 left-0 right-0 z-20 px-4 py-3 bg-gradient-to-t from-arch-dark/80 to-transparent">
+                            <div class="flex items-center justify-between text-xs text-arch-mist/50 font-mono">
+                                <span>Drag to compare</span>
+                                <span id="sliderPercent">50%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Download Button -->
+                    <div class="flex justify-center mt-6">
+                        <button
+                            id="downloadBtn"
+                            onclick="downloadImage()"
+                            class="btn-secondary text-arch-cream px-8 py-3 font-medium text-sm flex items-center gap-2"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            ダウンロード
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error Section -->
+                <div id="errorSection" class="hidden mb-8">
+                    <div class="bg-red-900/20 border border-red-500/30 p-4">
+                        <p class="text-red-400 text-sm" id="errorMessage"></p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="fixed bottom-0 left-0 right-0 px-8 py-3 bg-arch-dark/90 border-t border-arch-steel/30 flex justify-between font-mono text-xs text-arch-mist/30 z-50">
+            <span>ArchiEnhance AI v2.0</span>
+            <span>建築パース高画質化ツール</span>
+        </footer>
+    </div>
+
+    <script>
+        // State
+        let originalImageData = null;
+        let originalFileName = '';
+        let generatedImageBlob = null;
+        let apiKey = localStorage.getItem('gemini_api_key') || '';
+
+        // Password - change this value to set your app password
+        const APP_PASSWORD = 'archienhance2024';
+
+        // Initialize
+        window.onload = function() {
+            // Check if already logged in
+            if (sessionStorage.getItem('authenticated') === 'true') {
+                showMainApp();
+            }
+
+            // Load saved API key
+            if (apiKey) {
+                document.getElementById('apiKeyInput').value = apiKey;
+                document.getElementById('apiKeyStatus').textContent = 'APIキーが保存されています';
+                document.getElementById('apiKeyStatus').className = 'mt-2 text-xs font-mono text-arch-gold/70';
+            }
+
+            // Setup drag and drop
+            setupDragAndDrop();
+
+            // Setup compare slider
+            setupCompareSlider();
+
+            // Setup option listeners
+            setupOptionListeners();
+        };
+
+        // Password check
+        window.checkPassword = function() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === APP_PASSWORD) {
+                sessionStorage.setItem('authenticated', 'true');
+                showMainApp();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        };
+
+        // Enter key for password
+        document.getElementById('passwordInput')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+        }
+
+        // API Key
+        window.saveApiKey = function() {
+            apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (apiKey) {
+                localStorage.setItem('gemini_api_key', apiKey);
+                document.getElementById('apiKeyStatus').textContent = 'APIキーを保存しました';
+                document.getElementById('apiKeyStatus').className = 'mt-2 text-xs font-mono text-green-400';
+            }
+        };
+
+        // Drag and drop
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+        }
+
+        // File handling
+        window.handleFileSelect = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        };
+
+        function handleFile(file) {
+            if (!file.type.match('image.*')) {
+                showError('画像ファイルを選択してください');
+                return;
+            }
+
+            originalFileName = file.name;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImageData = e.target.result;
+                document.getElementById('previewImage').src = originalImageData;
+                document.getElementById('previewSection').classList.remove('hidden');
+                document.getElementById('generateSection').classList.remove('hidden');
+                document.getElementById('resultSection').classList.add('hidden');
+                document.getElementById('errorSection').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Generate image
+        window.generateImage = async function() {
+            if (!apiKey) {
+                showError('APIキーを入力してください');
+                return;
+            }
+
+            if (!originalImageData) {
+                showError('画像をアップロードしてください');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            const btnText = document.getElementById('generateBtnText');
+            const spinner = document.getElementById('generateSpinner');
+
+            btn.disabled = true;
+            btnText.textContent = '生成中...';
+            spinner.classList.remove('hidden');
+
+            try {
+                const timeOfDay = document.querySelector('input[name="timeOfDay"]:checked').value;
+                const autoBackground = document.getElementById('autoBackground').checked;
+                const enhanceTexture = document.getElementById('enhanceTexture').checked;
+                const customPrompt = document.getElementById('customPrompt').value;
+
+                const isDaytime = timeOfDay === 'daytime';
+                const timeSetting = isDaytime
+                    ? "bright natural daylight, clear blue sky, warm sunlight"
+                    : "dramatic night lighting, warm interior glow from windows, elegant evening atmosphere";
+
+                let prompt = `You are an expert architectural visualizer. Enhance this building exterior perspective with professional quality.
+
+LIGHTING: ${timeSetting}
+
+REQUIREMENTS:
+- Significantly enhance global illumination and ambient occlusion
+- Deepen shadows for better depth perception
+- Maintain the original architectural design and proportions
+- Output a photorealistic, high-quality architectural visualization`;
+
+                if (autoBackground) {
+                    prompt += `\n\nBACKGROUND: If the image has white or empty background areas, generate a realistic, contextual environment (sky, landscape, trees, or urban context) that seamlessly blends with the building and lighting.`;
+                }
+
+                if (enhanceTexture) {
+                    prompt += `\n\nTEXTURES: Enhance all surface materials (concrete, glass, wood, metal, stone) to appear highly detailed and photorealistic.`;
+                }
+
+                if (customPrompt) {
+                    prompt += `\n\nADDITIONAL INSTRUCTIONS: ${customPrompt}`;
+                }
+
+                prompt += `\n\nDeliver a stunning, professional architectural rendering.`;
+
+                // Convert base64 to proper format
+                const base64Data = originalImageData.split(',')[1];
+                const mimeType = originalImageData.split(';')[0].split(':')[1];
+
+                // Make API request using fetch
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inline_data: {
+                                        mime_type: mimeType,
+                                        data: base64Data
+                                    }
+                                }
+                            ]
+                        }],
+                        generationConfig: {
+                            responseModalities: ["TEXT", "IMAGE"]
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || 'API request failed');
+                }
+
+                const result = await response.json();
+
+                // Extract image from response
+                let generatedImageData = null;
+                if (result.candidates && result.candidates[0]?.content?.parts) {
+                    for (const part of result.candidates[0].content.parts) {
+                        if (part.inlineData) {
+                            generatedImageData = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                            break;
+                        }
+                    }
+                }
+
+                if (generatedImageData) {
+                    // Show result
+                    document.getElementById('previewSection').classList.add('hidden');
+                    document.getElementById('resultSection').classList.remove('hidden');
+                    document.getElementById('errorSection').classList.add('hidden');
+
+                    // Set images
+                    document.getElementById('beforeImage').src = originalImageData;
+                    document.getElementById('afterImage').src = generatedImageData;
+
+                    // Store for download
+                    generatedImageBlob = await fetch(generatedImageData).then(r => r.blob());
+
+                    // Reset slider
+                    updateSlider(50);
+                } else {
+                    throw new Error('画像の生成に失敗しました');
+                }
+
+            } catch (error) {
+                console.error('Generation error:', error);
+                showError(`エラーが発生しました: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = '高画質化を実行';
+                spinner.classList.add('hidden');
+            }
+        };
+
+        // Compare slider
+        function setupCompareSlider() {
+            const container = document.getElementById('compareContainer');
+            let isDragging = false;
+
+            const handleMove = (clientX) => {
+                if (!isDragging) return;
+                const rect = container.getBoundingClientRect();
+                const x = clientX - rect.left;
+                const percentage = Math.min(Math.max((x / rect.width) * 100, 2), 98);
+                updateSlider(percentage);
+            };
+
+            container.addEventListener('mousedown', () => isDragging = true);
+            window.addEventListener('mouseup', () => isDragging = false);
+            window.addEventListener('mousemove', (e) => handleMove(e.clientX));
+
+            container.addEventListener('touchstart', () => isDragging = true);
+            window.addEventListener('touchend', () => isDragging = false);
+            window.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX));
+        }
+
+        function updateSlider(percentage) {
+            const beforeClip = document.getElementById('beforeClip');
+            const sliderLine = document.getElementById('sliderLine');
+            const sliderHandle = document.getElementById('sliderHandle');
+            const sliderPercent = document.getElementById('sliderPercent');
+            const beforeImage = document.getElementById('beforeImage');
+            const container = document.getElementById('compareContainer');
+
+            beforeClip.style.width = `${percentage}%`;
+            sliderLine.style.left = `${percentage}%`;
+            sliderHandle.style.left = `${percentage}%`;
+            sliderPercent.textContent = `${Math.round(percentage)}%`;
+
+            // Adjust before image width to match container
+            beforeImage.style.width = `${container.clientWidth}px`;
+        }
+
+        // Option listeners
+        function setupOptionListeners() {
+            document.querySelectorAll('input[name="timeOfDay"]').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const isDaytime = e.target.value === 'daytime';
+                    document.getElementById('lightingText').textContent =
+                        isDaytime ? '昼間のライティング適用' : '夜間のライティング適用';
+                });
+            });
+
+            document.getElementById('autoBackground').addEventListener('change', (e) => {
+                document.getElementById('bgListItem').style.display = e.target.checked ? 'flex' : 'none';
+            });
+
+            document.getElementById('enhanceTexture').addEventListener('change', (e) => {
+                document.getElementById('textureListItem').style.display = e.target.checked ? 'flex' : 'none';
+            });
+        }
+
+        // Download
+        window.downloadImage = function() {
+            if (!generatedImageBlob) return;
+
+            const timeOfDay = document.querySelector('input[name="timeOfDay"]:checked').value;
+            const baseName = originalFileName.split('.')[0] || 'image';
+            const fileName = `archienhance_${timeOfDay}_${baseName}.png`;
+
+            const url = URL.createObjectURL(generatedImageBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        // Error handling
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorSection').classList.remove('hidden');
+        }
+
+        // Resize handler for compare slider
+        window.addEventListener('resize', () => {
+            if (!document.getElementById('resultSection').classList.contains('hidden')) {
+                const beforeImage = document.getElementById('beforeImage');
+                const container = document.getElementById('compareContainer');
+                beforeImage.style.width = `${container.clientWidth}px`;
+            }
+        });
+    </script>
+</body>
+</html>

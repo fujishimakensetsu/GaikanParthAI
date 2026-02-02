@@ -31,9 +31,9 @@ def generate():
     try:
         data = request.json
 
-        # Gemini APIにリクエスト (Nano Banana Pro / Gemini 3 Pro Image)
+        # Gemini APIにリクエスト (Gemini 2.0 Flash Experimental Image Generation)
         response = requests.post(
-            f'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key={GEMINI_API_KEY}',
+            f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key={GEMINI_API_KEY}',
             json={
                 'contents': [{
                     'parts': data.get('parts', [])
@@ -43,7 +43,7 @@ def generate():
                 }
             },
             headers={'Content-Type': 'application/json'},
-            timeout=120
+            timeout=180
         )
 
         if response.status_code != 200:

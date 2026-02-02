@@ -23,5 +23,5 @@ ENV PORT=8080
 # ヘルスチェック用
 HEALTHCHECK CMD curl --fail http://localhost:$PORT/ || exit 1
 
-# Gunicorn でFlaskアプリを起動
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 120 server:app
+# Gunicorn でFlaskアプリを起動（タイムアウトを延長）
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 300 server:app

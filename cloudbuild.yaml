@@ -32,9 +32,11 @@ steps:
       - '--set-env-vars'
       - 'APP_PASSWORD=${_APP_PASSWORD}'
       - '--memory'
-      - '1Gi'
+      - '2Gi'
       - '--timeout'
       - '300'
+      - '--cpu'
+      - '2'
 
 images:
   - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/gaikan-parth-ai/gaikan-parth-ai:$COMMIT_SHA'

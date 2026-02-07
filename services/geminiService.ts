@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
- * Enhances an architectural image using Gemini 2.5 Flash Image.
+ * Enhances an architectural image using Gemini 3 Pro Image Preview.
  * Specifically targets the requirement to simulate a line-drawing conversion process
  * to enhance lighting, shadows, and textures while maintaining original colors.
  */
@@ -53,7 +53,7 @@ export const enhanceArchitecturalImage = async (
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-3-pro-image-preview',
       contents: {
         parts: [
           {
@@ -66,6 +66,9 @@ export const enhanceArchitecturalImage = async (
             text: finalPrompt,
           },
         ],
+      },
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
       },
     });
 
